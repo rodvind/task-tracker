@@ -1,9 +1,8 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
+const bcrypt = require('bcryptjs')
 
-
-// Create a Model
-const User = mongoose.model('User', {
+const userSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
@@ -41,6 +40,21 @@ const User = mongoose.model('User', {
         } 
     }
 })
+
+// Using a method on our model to set the middleware up
+userSchema.pre('save', async function (next) {
+    const user = this
+    // console.log('Just before saving!');
+
+    // If the passwors is modified, avoid double-hashing
+    if (user.isModified('password')) {
+        user.password = await bcrypt.hash(user.password, 8)
+    }
+
+    next()
+})
+// Create a Model
+const User = mongoose.model('User', userSchema)
 
 module.exports = User
 
