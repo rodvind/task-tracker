@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const Task = require('./task')
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -10,6 +12,7 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
+        unique: true,
         required: true,
         validate(value) {
             if (!validator.isEmail(value)) {
@@ -38,10 +41,79 @@ const userSchema = new mongoose.Schema({
                 throw new Error('Password must not contain "password"')
             }
         } 
-    }
+    },
+    tokens: [{
+        token: {
+            type: String,
+            required: true
+        }
+    }]
+}, {
+    timestamps: true
 })
 
+// Create a method on a user to get the user profile as an objec
+userSchema.methods.getPublicProfile = function () {
+    const user = this
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+    
+    return userObject
+}
+
+// Create a virtual property for the User Model
+// It is not actual data and it is a relationship between two entities
+// between Task and User models
+userSchema.virtual('tasks', {
+    ref: 'Task',
+    localField: '_id',
+    foreignField: 'owner'
+})
+
+userSchema.methods.toJSON = function () {
+    const user = this
+    const userObject = user.toObject()
+
+    delete userObject.password
+    delete userObject.tokens
+    
+    return userObject
+}
+
+// Create a method for issuing a token for an authorized user
+userSchema.methods.generateAuthToken = async function () {
+    const user = this
+    const token = jwt.sign({ _id: user._id.toString() }, 'thisismynewsecret')
+    
+    user.tokens = user.tokens.concat({ token })
+    await user.save()
+
+    return token
+}
+
+// Attach a method to the userSchema to be able to find
+// the user by credentials which can be accessed by an 
+// instance of the User on our user route
+userSchema.statics.findByCredentials = async (email, password) => {
+    const user = await User.findOne({ email })
+
+    if (!user) {
+        throw new Error('Unable to login')
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password)
+
+    if (!isMatch) {
+        throw new Error('Unable to login')
+    }
+
+    return user
+}
+
 // Using a method on our model to set the middleware up
+// Hash the plain text password before saving
 userSchema.pre('save', async function (next) {
     const user = this
     // console.log('Just before saving!');
@@ -53,6 +125,16 @@ userSchema.pre('save', async function (next) {
 
     next()
 })
+
+// Delete user tasks when user is removed
+userSchema.pre('remove', async function (next) {
+    const user = this
+
+    await Task.deleteMany({ owner: user._id })
+
+    next()
+})
+
 // Create a Model
 const User = mongoose.model('User', userSchema)
 
