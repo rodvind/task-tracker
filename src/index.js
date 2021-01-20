@@ -8,8 +8,23 @@ const taskRouter = require('./routers/task')
 
 const app = exprees()
 const port = process.env.PORT || 3000
-app.use(exprees.json())
 
+// app.use((req, res, next) => {
+//     if (req.method === 'GET') {
+//         res.send('GET requests are disabled!')
+//     } else {
+//         next()
+//     }
+//     // console.log(req.method, req.path);
+//     // next()
+// })
+
+// Maintenance Middleware
+// app.use((req, res, next) => {
+//     res.status(503).send('The sever is under maintenance, please come back shortly')
+// })
+
+app.use(exprees.json())
 app.use(userRouter)
 app.use(taskRouter)
 
@@ -19,18 +34,40 @@ app.listen(port, () => {
     console.log(`Server is up on port ${port}`);
 })
 
-const bcrypt = require('bcryptjs')
-const myFunction = async () => {
-    const password = 'Red12345!'
-    const hashedPassword = await bcrypt.hash(password, 8)
-    console.log(password);
-    console.log(hashedPassword);
+// const Task = require('./models/task')
 
-    const isMatch = await bcrypt.compare('Red12345!', hashedPassword)
-    console.log(isMatch);
-}
+// const main = async () => {
+//     // const task = await Task.findById('6005afe53af7c07a42173b22')
+//     // await task.populate('owner').execPopulate()
+//     // console.log(task.owner);
 
-myFunction()
+//     const user = await User.findById('6005afd53af7c07a42173b20')
+//     await user.populate('tasks').execPopulate()
+//     console.log(user.tasks);
+// }
+
+// main()
+
+// const jwt = require('jsonwebtoken')
+
+// const myFunction = async () => {
+//     const token = jwt.sign({ _id: 'abc123' }, 'thisismynewsecret', { expiresIn: '7 days' })
+//     console.log(token);
+//     const data = jwt.verify(token, 'thisismynewsecret')
+//     console.log(data);
+// }
+// const bcrypt = require('bcryptjs')
+// const myFunction = async () => {
+//     const password = 'Red12345!'
+//     const hashedPassword = await bcrypt.hash(password, 8)
+//     console.log(password);
+//     console.log(hashedPassword);
+
+//     const isMatch = await bcrypt.compare('Red12345!', hashedPassword)
+//     console.log(isMatch);
+// }
+
+// myFunction()
 
 // Create a new Rout, setup those routes, finally register it 
 // with express app
