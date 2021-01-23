@@ -7,7 +7,8 @@ const taskRouter = require('./routers/task')
 
 
 const app = exprees()
-const port = process.env.PORT || 3000
+// const port = process.env.PORT || 3000
+const port = process.env.PORT
 
 const multer = require('multer')
 const upload = multer({
